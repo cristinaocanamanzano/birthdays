@@ -1,0 +1,122 @@
+#07.09.2018 How to test a program with two classes, injection of classes
+#hard-coded dependency: one class that is used within another class, like in this example
+class BomberPlane
+  def drop
+    Bomb.new.explode
+  end
+end
+
+class Bomb
+  def explode
+    puts "Boom" * 1_000
+    #the underscore is the convention for numbers with more than 3 digits
+  end
+end
+
+class Missile
+  def explode
+    puts "Bigger boom" * 50
+  end
+end
+bp = BomberPlane.new
+bp.drop
+
+#if we want the bomberplane to explode a missile, we need to change the code.
+#In this case, it would be better to use arguments
+
+class BomberPlane
+  def drop(weapon)
+    weapon.new.explode
+  end
+end
+
+class Bomb
+  def explode
+    puts "Boom" * 1_000
+    #the underscore is the convention for numbers with more than 3 digits
+  end
+end
+
+class Missile
+  def explode
+    puts "Bigger boom" * 50
+  end
+end
+
+bp = BomberPlane.new
+bp.drop(Bomb)
+bp.drop(Missile)
+
+#Another way
+
+class BomberPlane
+  def initialize(weapon)
+    @weapon = weapon
+  end
+
+  def drop(weapon)
+    @weapon.new.explode
+  end
+end
+
+class Bomb
+  def explode
+    puts "Boom" * 1_000
+  end
+end
+
+class Missile
+  def explode
+    puts "Bigger boom" * 50
+  end
+end
+
+bpb = BomberPlane.new(Bomb)
+bpm = BomberPlane.new(Missile)
+bpb.drop
+bpm.drop
+
+#each class should be in a different file, this is how it is done conventionally
+
+#in the flower_spec.rb file:
+require "bomb"
+RSpec.describe Bomb do
+  it "outputs a bomb explosion" do
+    #first create an instance of the class: setup
+    bomb = Bomb.new #another way: subject(:bomb) { described_class.new }
+    #then test if the method gives what it should give: execute, assert
+    expect { bomb.explode}.to output(type output + "\n").to_stdout
+  end
+  end
+end
+
+#in the bomber_plane_spec File
+
+require "bomber_plane"
+require "bomb"
+RSpec.describe BomberPlane do
+  it "drops something" do
+    bomber_plane = BomberPlane.new(Bomb)
+    expect { bomber_plane.drop}. to output(type output + "\n").to_stdout
+  end
+end
+
+#if you change something in one class, the test for bomber_plane will fail - idea: test classes in isolation
+#in the bomber_plane_spec File
+
+require "bomber_plane"
+require "bomb"
+
+class MockBomb
+  def explode
+    puts "hello"
+  end
+end
+
+RSpec.describe BomberPlane do
+  it "drops something" do
+
+    bomber_plane = BomberPlane.new(MockBomb)
+    expect { bomber_plane.drop}. to output("hello\n").to_stdout
+  end
+end
